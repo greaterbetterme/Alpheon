@@ -249,11 +249,11 @@ else:
             with tab_table:
                 st.dataframe(filtered_df, use_container_width=True)
                 if is_free_user:
-                    st.info("💡 **Free-Modus:** Du siehst hier die ersten 50 Aktien. Hole dir Premium, um alle Ergebnisse uneingeschränkt einzusehen.")
+                    st.info("**Free-Modus:** Du siehst hier die ersten 50 Aktien. Hole dir Premium, um alle Ergebnisse uneingeschränkt einzusehen.")
 
             with tab_deepdive:
                 if is_free_user:
-                    st.warning("🔒 **Premium-Feature:** Die Einzeltitel-Analyse mit interaktiven Kursgraphen ist exklusiv für Premium-Mitglieder verfügbar. Wechsle zum Tab 'Abonnement (Billing)', um freizuschalten.")
+                    st.warning("**Premium-Feature:** Die Einzeltitel-Analyse mit interaktiven Kursgraphen ist exklusiv für Premium-Mitglieder verfügbar. Wechsle zum Tab 'Abonnement (Billing)', um freizuschalten.")
                 else:
                     if not filtered_df.empty:
                         selected_ticker = st.selectbox("Ticker auswählen:", filtered_df["Ticker"].unique())
@@ -272,7 +272,7 @@ else:
 
             with tab_export:
                 if is_free_user:
-                    st.warning("🔒 **Premium-Feature:** Der CSV-Export von Reports ist im Gratis-Modus deaktiviert.")
+                    st.warning("**Premium-Feature:** Der CSV-Export von Reports ist im Gratis-Modus deaktiviert.")
                 else:
                     csv_data = filtered_df.to_csv(index=False).encode('utf-8')
                     st.download_button(
