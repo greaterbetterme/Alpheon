@@ -1,0 +1,34 @@
+name: Daily Stock Data Update
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # Läuft jeden Tag um 04:00 Uhr UTC
+  workflow_dispatch: # Erlaubt auch den manuellen Start über den GitHub-Tab "Actions"
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Abhängigkeiten installieren
+        run: |
+          pip install -r requirements.txt
+
+      - name: Update-Skript ausführen
+        run: |
+          python update_data.py
+
+      - name: Änderungen automatisch committen & pushen
+        run: |
+          git config --global user.name "GitHub Action Bot"
+          git config --global user.email "action@github.com"
+          git add uni_snapshot.csv
+          git commit -m "Tägliches Aktien-Daten-Update" || exit 0
+          git push
