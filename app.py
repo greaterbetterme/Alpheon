@@ -143,6 +143,9 @@ st.markdown("""
 # INITIALISIERUNG
 init_auth_state()
 
+# Prüfen, ob der Nutzer im Free-Modus ist (Annahme: "is_premium" steuert den Status)
+is_free_user = not st.session_state.get("is_premium", False)
+
 # --- SEITENLEISTE (Logo 75x75px, innerer Balken schwarz) ---
 with st.sidebar:
     st.markdown("""
@@ -226,6 +229,10 @@ else:
             
             filtered_df = filtered_df.sort_values(by="Alpheon Score", ascending=False)
 
+            # --- GRATIS-PLAN EINSCHRÄNKUNG: Max. 50 Aktien ---
+            if is_free_user and not filtered_df.empty:
+                filtered_df = filtered_df.head(50)
+
             # Metriken in einer sauberen weißen Box im Hauptbereich
             st.markdown('<div class="metrics-container" style="margin-top: 10px;">', unsafe_allow_html=True)
             c1, c2, c3, c4 = st.columns(4)
@@ -241,31 +248,39 @@ else:
 
             with tab_table:
                 st.dataframe(filtered_df, use_container_width=True)
+                if is_free_user:
+                    st.info("💡 **Free-Modus:** Du siehst hier die ersten 50 Aktien. Hole dir Premium, um alle Ergebnisse uneingeschränkt einzusehen.")
 
             with tab_deepdive:
-                if not filtered_df.empty:
-                    selected_ticker = st.selectbox("Ticker auswählen:", filtered_df["Ticker"].unique())
-                    selected_row = filtered_df[filtered_df["Ticker"] == selected_ticker].iloc[0]
-                    
-                    d1, d2, d3 = st.columns(3)
-                    d1.text(f"Unternehmen: {selected_row['Unternehmen']}")
-                    d2.text(f"Sektor: {selected_row['Sektor']}")
-                    d3.text(f"Alpheon Score: {selected_row['Alpheon Score']} / 100")
-                    
-                    hist_close = fetch_historical_data(selected_ticker)
-                    if hist_close is not None:
-                        st.line_chart(hist_close)
-                    else:
-                        st.warning("Keine Kursdaten verfügbar.")
+                if is_free_user:
+                    st.warning("🔒 **Premium-Feature:** Die Einzeltitel-Analyse mit interaktiven Kursgraphen ist exklusiv für Premium-Mitglieder verfügbar. Wechsle zum Tab 'Abonnement (Billing)', um freizuschalten.")
+                else:
+                    if not filtered_df.empty:
+                        selected_ticker = st.selectbox("Ticker auswählen:", filtered_df["Ticker"].unique())
+                        selected_row = filtered_df[filtered_df["Ticker"] == selected_ticker].iloc[0]
+                        
+                        d1, d2, d3 = st.columns(3)
+                        d1.text(f"Unternehmen: {selected_row['Unternehmen']}")
+                        d2.text(f"Sektor: {selected_row['Sektor']}")
+                        d3.text(f"Alpheon Score: {selected_row['Alpheon Score']} / 100")
+                        
+                        hist_close = fetch_historical_data(selected_ticker)
+                        if hist_close is not None and not hist_close.empty:
+                            st.line_chart(hist_close)
+                        else:
+                            st.warning("Keine Kursdaten verfügbar.")
 
             with tab_export:
-                csv_data = filtered_df.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="CSV Report herunterladen",
-                    data=csv_data,
-                    file_name="alpheon_value_report.csv",
-                    mime="text/csv",
-                    use_container_width=True
-                )
+                if is_free_user:
+                    st.warning("🔒 **Premium-Feature:** Der CSV-Export von Reports ist im Gratis-Modus deaktiviert.")
+                else:
+                    csv_data = filtered_df.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        label="CSV Report herunterladen",
+                        data=csv_data,
+                        file_name="alpheon_value_report.csv",
+                        mime="text/csv",
+                        use_container_width=True
+                    )
         else:
             st.warning("Keine Aktien entsprechen den Kriterien.")
