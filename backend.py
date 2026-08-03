@@ -18,12 +18,13 @@ def fetch_screened_data():
             stock = yf.Ticker(ticker)
             info = stock.info
             
-            # Beispiel für die Berechnung/Auslesung des Alpheon Scores (an deine Logik anpassen)
-            # Falls du eine eigene Berechnungsfunktion hast, füge sie hier ein.
-            score = 50  # Fallback-Wert, falls keine Metrik berechnet wird
-            
+            score = 50  # Fallback für den Score
             market_cap = info.get("marketCap", 0)
-            market_cap_b = market_cap / 1e9 if market_cap else 0 # Umrechnung in Milliarden
+            market_cap_b = market_cap / 1e9 if market_cap else 0
+            
+            # Dividendenrendite von yfinance holen (wird oft als Dezimalzahl geliefert, z.B. 0.02 = 2%)
+            dividend_yield = info.get("dividendYield", 0)
+            dividend_pct = (dividend_yield * 100) if dividend_yield else 0.0
 
             data_list.append({
                 "Ticker": ticker,
@@ -31,11 +32,11 @@ def fetch_screened_data():
                 "Price": info.get("currentPrice") or info.get("regularMarketPrice", 0),
                 "P/E (KGV)": info.get("trailingPE", 0) or 0,
                 "P/B (KBV)": info.get("priceToBook", 0) or 0,
-                "Umsatz ($B)": market_cap_b, # Entspricht dem Spaltennamen im Filter
-                "Alpheon Score": score
+                "Umsatz ($B)": market_cap_b,
+                "Alpheon Score": score,
+                "Dividendenrendite (%)": dividend_pct
             })
             
-            # WICHTIG: Längere Pause, damit Yahoo Cloud-IPs nicht sperrt
             time.sleep(0.5)
             
         except Exception as e:
@@ -44,10 +45,12 @@ def fetch_screened_data():
 
     df = pd.DataFrame(data_list)
     
-    # Sicherheitsnetz: Falls der DataFrame komplett leer ist, leere Spalten mit den exakten Namen erzeugen,
-    # damit die App wegen fehlender Keys nicht abstürzt.
+    # Sicherheitsnetz mit allen benötigten Spalten inklusive Dividendenrendite
     if df.empty:
-        df = pd.DataFrame(columns=["Ticker", "Name", "Price", "P/E (KGV)", "P/B (KBV)", "Umsatz ($B)", "Alpheon Score"])
+        df = pd.DataFrame(columns=[
+            "Ticker", "Name", "Price", "P/E (KGV)", "P/B (KBV)", 
+            "Umsatz ($B)", "Alpheon Score", "Dividendenrendite (%)"
+        ])
         
     return df
 
