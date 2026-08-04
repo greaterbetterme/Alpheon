@@ -25,10 +25,11 @@ jobs:
         run: |
           python update_data.py
 
-      - name: Änderungen automatisch committen & pushen
+      - name: Commit and push changes
         run: |
           git config --global user.name "GitHub Action Bot"
-          git config --global user.email "action@github.com"
+          git config --global user.email "bot@users.noreply.github.com"
           git add uni_snapshot.csv
-          git commit -m "Tägliches Aktien-Daten-Update" || exit 0
+          git commit -m "Tägliches Aktien-Daten-Update" || echo "No changes to commit"
+          git pull origin main --rebase || echo "No remote changes"
           git push
