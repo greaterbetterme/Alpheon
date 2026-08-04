@@ -29,7 +29,7 @@ jobs:
         run: |
           git config --global user.name "GitHub Action Bot"
           git config --global user.email "bot@users.noreply.github.com"
+          git pull origin main --rebase
           git add uni_snapshot.csv
           git commit -m "Tägliches Aktien-Daten-Update" || echo "No changes to commit"
-          git pull origin main --rebase || echo "No remote changes"
-          git push
+          git push origin main
