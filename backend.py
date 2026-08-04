@@ -2,16 +2,23 @@
 import pandas as pd
 import streamlit as st
 import os
+import yfinance as yf
 
 @st.cache_data(ttl=3600)
 def fetch_screened_data():
     """
-    Liest den vorberechneten Datensatz ein.
+    Liest den vorberechneten Datensatz ein und bereinigt Formatierungen.
     """
     snapshot_file = "uni_snapshot.csv"
     
     if os.path.exists(snapshot_file):
         df = pd.read_csv(snapshot_file)
+        
+        # Sicherheits-Check, falls alte Spaltennamen fehlen
+        expected_cols = ["Ticker", "Name", "Price", "P/E (KGV)", "P/B (KBV)", "Umsatz ($B)", "Alpheon Score", "Dividendenrendite (%)"]
+        for col in expected_cols:
+            if col not in df.columns:
+                df[col] = 0.0 if col != "Name" and col != "Ticker" else "N/A"
     else:
         # Fallback, falls die CSV noch nicht existiert
         df = pd.DataFrame(columns=[
@@ -24,13 +31,13 @@ def fetch_screened_data():
 @st.cache_data(ttl=86400)
 def fetch_historical_data(ticker, period="1y"):
     """
-    Historische Daten können bei Bedarf weiterhin live geladen werden 
-    (da es nur ein einzelner Ticker bei Klick ist, gibt das fast nie Rate-Limits).
+    Lädt historische Kursdaten für den Einzeltitel-Deepdive.
     """
     try:
-        stock = yf.Ticker(ticker) if 'yf' in globals() else None
-        # Falls yfinance hier direkt benötigt wird:
-        import yfinance as yf
-        return yf.Ticker(ticker).history(period=period)
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period=period)
+        if not hist.empty and "Close" in hist.columns:
+            return hist["Close"]
+        return hist
     except Exception as e:
         return pd.DataFrame()
