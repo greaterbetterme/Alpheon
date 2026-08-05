@@ -2,19 +2,22 @@ name: Daily Stock Data Update
 
 on:
   schedule:
-    - cron: '0 6 * * *' # Läuft jeden Tag um 06:00 UTC
-  workflow_dispatch: # Erlaubt den manuellen Start
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write # Wichtig: Erlaubt dem Bot das Schreiben ins Repository
+      contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,13 +35,14 @@ jobs:
           git config --global user.name "GitHub Action Bot"
           git config --global user.email "bot@users.noreply.github.com"
           
-          # 1. Erst synchronisieren, bevor lokale Dateien entstehen
-          git pull origin main --rebase || echo "No rebase needed"
+          # Auf den Main-Branch ausrichten und lokale Konflikte hart zurücksetzen
+          git checkout main || git checkout -b main
+          git reset --hard origin/main || true
           
-          # 2. Daten generieren (erzeugt die uni_snapshot.csv)
+          # Daten generieren
           python update_data.py
           
-          # 3. Speichern, committen und hochschieben
+          # Ändern, committen und pushen
           git add uni_snapshot.csv
           git commit -m "Tägliches Aktien-Daten-Update" || echo "No changes to commit"
           git push origin main
