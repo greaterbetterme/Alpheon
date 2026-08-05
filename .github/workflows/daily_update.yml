@@ -35,13 +35,20 @@ jobs:
           git config --global user.name "GitHub Action Bot"
           git config --global user.email "bot@users.noreply.github.com"
           
-          # Auf den Main-Branch ausrichten und lokale Konflikte hart zurücksetzen
-          git checkout main || git checkout -b main
-          git reset --hard origin/main || true
+          # GARANTIE-CLEANUP: Löscht absolut alle lokalen Änderungen/Konflikte im Keim
+          git reset --hard HEAD
+          git clean -fd
+          
+          # Jetzt absolut fehlerfreier Pull
+          git pull origin main --rebase
           
           # Daten generieren
           python update_data.py
           
+          # Speichern, committen und pushen
+          git add uni_snapshot.csv
+          git commit -m "Tägliches Aktien-Daten-Update" || echo "No changes to commit"
+          git push origin main
           # Ändern, committen und pushen
           git add uni_snapshot.csv
           git commit -m "Tägliches Aktien-Daten-Update" || echo "No changes to commit"
